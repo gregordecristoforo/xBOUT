@@ -14,7 +14,11 @@ from .plotting.animate import animate_poloidal, animate_pcolormesh, animate_line
 from .plotting import plotfuncs
 from .plotting.utils import _create_norm
 from .region import _from_region
-from .utils import _update_metadata_increased_resolution, _get_bounding_surfaces
+from .utils import (
+    _add_cartesian_coordinates,
+    _update_metadata_increased_resolution,
+    _get_bounding_surfaces
+)
 
 
 @register_dataarray_accessor("bout")
@@ -380,6 +384,9 @@ class BoutDataArrayAccessor:
                 da = da.isel(**{zcoord: toroidal_points})
 
         return da
+
+    def add_cartesian_coordinates(self):
+        return _add_cartesian_coordinates(self.data)
 
     def remove_yboundaries(self, return_dataset=False, remove_extra_upper=False):
         """
