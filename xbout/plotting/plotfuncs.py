@@ -8,6 +8,7 @@ from .utils import (
     _create_norm,
     _decompose_regions,
     _is_core_only,
+    _make_structured_triangulation,
     plot_separatrices,
     plot_targets,
 )
@@ -311,47 +312,147 @@ def plot2d_wrapper(
 
     return artists
 
-def plot3d(da, **kwargs):
+def plot3d(da, engine='k3d', **kwargs):
     """
-    Make a 3d plot using mayavi
+    Make a 3d plot
+
+    Parameters
+    ----------
+    engine : {'k3d', 'mayavi'}
+        3d plotting library to use
     """
 
     if len(da.dims) != 3:
         raise ValueError(f"plot3d needs to be passed 3d data. Got {da.dims}.")
 
-    from mayavi import mlab
-
     da = da.bout.add_cartesian_coordinates()
-    vmin = da.min()
-    vmax = da.max()
+    vmin = float(da.min().values)
+    vmax = float(da.max().values)
+    xcoord = da.metadata['bout_xdim']
+    ycoord = da.metadata['bout_ydim']
+    zcoord = da.metadata['bout_zdim']
 
-    for region_name, da_region in _decompose_regions(da).items():
-        region = da_region.regions[region_name]
+    if engine == 'k3d':
+        import k3d
 
-        # Always include z-surfaces
-        surface_selections = [{da.metadata['bout_zdim']: 0},
-                              {da.metadata['bout_zdim']: -1}
-                              ]
-        if region.connection_inner_x is None:
-            # Plot the inner-x surface
-            surface_selections.append({da.metadata['bout_xdim']: 0})
-        if region.connection_outer_x is None:
-            # Plot the outer-x surface
-            surface_selections.append({da.metadata['bout_xdim']: -1})
-        if region.connection_lower_y is None:
-            # Plot the lower-y surface
-            surface_selections.append({da.metadata['bout_ydim']: 0})
-        if region.connection_upper_y is None:
-            # Plot the upper-y surface
-            surface_selections.append({da.metadata['bout_ydim']: -1})
+        from matplotlib.tri import Triangulation
+        plot = k3d.plot()
 
-        for surface_sel in surface_selections:
-            da_sel = da_region.isel(surface_sel)
-            X = da_sel['X_cartesian'].values
-            Y = da_sel['Y_cartesian'].values
-            Z = da_sel['Z_cartesian'].values
-            data = da_sel.values
+        for region_name, da_region in _decompose_regions(da).items():
+            region = da_region.regions[region_name]
 
-            mlab.mesh(X, Y, Z, scalars=data, vmin=vmin, vmax=vmax, **kwargs)
+            npsi, ntheta, nzeta = da_region.shape
 
-    plt.show()
+            if region.connection_inner_x is None:
+                # Plot the inner-x surface
+                da_sel = da_region.isel({xcoord: 0})
+                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
+                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
+                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
+                data = da_sel.values.flatten().astype(np.float32)
+
+                indices = _make_structured_triangulation(ntheta, nzeta)
+
+                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
+                                 color_range=[vmin, vmax], **kwargs)
+
+            if region.connection_outer_x is None:
+                # Plot the outer-x surface
+                da_sel = da_region.isel({xcoord: -1})
+                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
+                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
+                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
+                data = da_sel.values.flatten().astype(np.float32)
+
+                indices = _make_structured_triangulation(ntheta, nzeta)
+
+                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
+                                 color_range=[vmin, vmax], **kwargs)
+
+            if region.connection_lower_y is None:
+                # Plot the lower-y surface
+                da_sel = da_region.isel({ycoord: 0})
+                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
+                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
+                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
+                data = da_sel.values.flatten().astype(np.float32)
+
+                indices = _make_structured_triangulation(npsi, nzeta)
+
+                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
+                                 color_range=[vmin, vmax], **kwargs)
+
+            if region.connection_upper_y is None:
+                # Plot the upper-y surface
+                da_sel = da_region.isel({ycoord: -1})
+                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
+                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
+                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
+                data = da_sel.values.flatten().astype(np.float32)
+
+                indices = _make_structured_triangulation(npsi, nzeta)
+
+                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
+                                 color_range=[vmin, vmax], **kwargs)
+
+            # First z-surface
+            da_sel = da_region.isel({zcoord: 0})
+            X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
+            Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
+            Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
+            data = da_sel.values.flatten().astype(np.float32)
+
+            indices = _make_structured_triangulation(npsi, ntheta)
+
+            plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
+                             color_range=[vmin, vmax], **kwargs)
+
+            # Last z-surface
+            da_sel = da_region.isel({zcoord: -1})
+            X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
+            Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
+            Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
+            data = da_sel.values.flatten().astype(np.float32)
+
+            indices = _make_structured_triangulation(npsi, ntheta)
+
+            plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
+                             color_range=[vmin, vmax], **kwargs)
+
+        return plot
+
+    elif engine == 'mayavi':
+        from mayavi import mlab
+
+        for region_name, da_region in _decompose_regions(da).items():
+            region = da_region.regions[region_name]
+
+            # Always include z-surfaces
+            surface_selections = [{da.metadata['bout_zdim']: 0},
+                                  {da.metadata['bout_zdim']: -1}
+                                  ]
+            if region.connection_inner_x is None:
+                # Plot the inner-x surface
+                surface_selections.append({da.metadata['bout_xdim']: 0})
+            if region.connection_outer_x is None:
+                # Plot the outer-x surface
+                surface_selections.append({da.metadata['bout_xdim']: -1})
+            if region.connection_lower_y is None:
+                # Plot the lower-y surface
+                surface_selections.append({da.metadata['bout_ydim']: 0})
+            if region.connection_upper_y is None:
+                # Plot the upper-y surface
+                surface_selections.append({da.metadata['bout_ydim']: -1})
+
+            for surface_sel in surface_selections:
+                da_sel = da_region.isel(surface_sel)
+                X = da_sel['X_cartesian'].values
+                Y = da_sel['Y_cartesian'].values
+                Z = da_sel['Z_cartesian'].values
+                data = da_sel.values
+
+                mlab.mesh(X, Y, Z, scalars=data, vmin=vmin, vmax=vmax, **kwargs)
+
+        plt.show()
+    else:
+        raise ValueError(f"Unrecognised plot3d() 'engine' argument: {engine}")
