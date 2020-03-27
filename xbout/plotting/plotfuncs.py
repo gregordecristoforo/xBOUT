@@ -310,3 +310,48 @@ def plot2d_wrapper(
         plot_targets(da_regions, ax, x=x, y=y, hatching=add_limiter_hatching)
 
     return artists
+
+def plot3d(da, **kwargs):
+    """
+    Make a 3d plot using mayavi
+    """
+
+    if len(da.dims) != 3:
+        raise ValueError(f"plot3d needs to be passed 3d data. Got {da.dims}.")
+
+    from mayavi import mlab
+
+    da = da.bout.add_cartesian_coordinates()
+    vmin = da.min()
+    vmax = da.max()
+
+    for region_name, da_region in _decompose_regions(da).items():
+        region = da_region.regions[region_name]
+
+        # Always include z-surfaces
+        surface_selections = [{da.metadata['bout_zdim']: 0},
+                              {da.metadata['bout_zdim']: -1}
+                              ]
+        if region.connection_inner_x is None:
+            # Plot the inner-x surface
+            surface_selections.append({da.metadata['bout_xdim']: 0})
+        if region.connection_outer_x is None:
+            # Plot the outer-x surface
+            surface_selections.append({da.metadata['bout_xdim']: -1})
+        if region.connection_lower_y is None:
+            # Plot the lower-y surface
+            surface_selections.append({da.metadata['bout_ydim']: 0})
+        if region.connection_upper_y is None:
+            # Plot the upper-y surface
+            surface_selections.append({da.metadata['bout_ydim']: -1})
+
+        for surface_sel in surface_selections:
+            da_sel = da_region.isel(surface_sel)
+            X = da_sel['X_cartesian'].values
+            Y = da_sel['Y_cartesian'].values
+            Z = da_sel['Z_cartesian'].values
+            data = da_sel.values
+
+            mlab.mesh(X, Y, Z, scalars=data, vmin=vmin, vmax=vmax, **kwargs)
+
+    plt.show()

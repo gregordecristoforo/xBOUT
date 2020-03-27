@@ -806,3 +806,6 @@ class BoutDataArrayAccessor:
 
     def regions(self, ax=None, **kwargs):
         return plotfuncs.regions(self.data, ax=ax, **kwargs)
+
+    def plot3d(self, ax=None, **kwargs):
+        return plotfuncs.plot3d(self.data, **kwargs)
