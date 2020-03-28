@@ -327,8 +327,8 @@ def plot3d(da, engine='k3d', **kwargs):
         raise ValueError(f"plot3d needs to be passed 3d data. Got {da.dims}.")
 
     da = da.bout.add_cartesian_coordinates()
-    vmin = float(da.min().values)
-    vmax = float(da.max().values)
+    vmin = kwargs.pop('vmin', float(da.min().values))
+    vmax = kwargs.pop('vmax', float(da.max().values))
     xcoord = da.metadata['bout_xdim']
     ycoord = da.metadata['bout_ydim']
     zcoord = da.metadata['bout_zdim']
