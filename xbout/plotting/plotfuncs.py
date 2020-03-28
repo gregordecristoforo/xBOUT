@@ -8,6 +8,7 @@ from .utils import (
     _create_norm,
     _decompose_regions,
     _is_core_only,
+    _k3d_plot_isel,
     _make_structured_triangulation,
     plot_separatrices,
     plot_targets,
@@ -345,79 +346,25 @@ def plot3d(da, engine='k3d', **kwargs):
 
             if region.connection_inner_x is None:
                 # Plot the inner-x surface
-                da_sel = da_region.isel({xcoord: 0})
-                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
-                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
-                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
-                data = da_sel.values.flatten().astype(np.float32)
-
-                indices = _make_structured_triangulation(ntheta, nzeta)
-
-                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
-                                 color_range=[vmin, vmax], **kwargs)
+                plot += _k3d_plot_isel(da_region, {xcoord: 0}, vmin, vmax, kwargs)
 
             if region.connection_outer_x is None:
                 # Plot the outer-x surface
-                da_sel = da_region.isel({xcoord: -1})
-                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
-                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
-                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
-                data = da_sel.values.flatten().astype(np.float32)
-
-                indices = _make_structured_triangulation(ntheta, nzeta)
-
-                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
-                                 color_range=[vmin, vmax], **kwargs)
+                plot += _k3d_plot_isel(da_region, {xcoord: -1}, vmin, vmax, kwargs)
 
             if region.connection_lower_y is None:
                 # Plot the lower-y surface
-                da_sel = da_region.isel({ycoord: 0})
-                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
-                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
-                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
-                data = da_sel.values.flatten().astype(np.float32)
-
-                indices = _make_structured_triangulation(npsi, nzeta)
-
-                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
-                                 color_range=[vmin, vmax], **kwargs)
+                plot += _k3d_plot_isel(da_region, {ycoord: 0}, vmin, vmax, kwargs)
 
             if region.connection_upper_y is None:
                 # Plot the upper-y surface
-                da_sel = da_region.isel({ycoord: -1})
-                X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
-                Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
-                Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
-                data = da_sel.values.flatten().astype(np.float32)
-
-                indices = _make_structured_triangulation(npsi, nzeta)
-
-                plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
-                                 color_range=[vmin, vmax], **kwargs)
+                plot += _k3d_plot_isel(da_region, {ycoord: -1}, vmin, vmax, kwargs)
 
             # First z-surface
-            da_sel = da_region.isel({zcoord: 0})
-            X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
-            Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
-            Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
-            data = da_sel.values.flatten().astype(np.float32)
-
-            indices = _make_structured_triangulation(npsi, ntheta)
-
-            plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
-                             color_range=[vmin, vmax], **kwargs)
+            plot += _k3d_plot_isel(da_region, {zcoord: 0}, vmin, vmax, kwargs)
 
             # Last z-surface
-            da_sel = da_region.isel({zcoord: -1})
-            X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
-            Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
-            Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
-            data = da_sel.values.flatten().astype(np.float32)
-
-            indices = _make_structured_triangulation(npsi, ntheta)
-
-            plot += k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
-                             color_range=[vmin, vmax], **kwargs)
+            plot += _k3d_plot_isel(da_region, {zcoord: -1}, vmin, vmax, kwargs)
 
         return plot
 

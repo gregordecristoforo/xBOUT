@@ -213,3 +213,18 @@ def _make_structured_triangulation(m, n):
                                     + n)
 
     return indices.reshape((2*(m - 1)*(n - 1), 3))
+
+
+def _k3d_plot_isel(da_region, isel, vmin, vmax, kwargs):
+    import k3d
+
+    da_sel = da_region.isel(isel)
+    X = da_sel['X_cartesian'].values.flatten().astype(np.float32)
+    Y = da_sel['Y_cartesian'].values.flatten().astype(np.float32)
+    Z = da_sel['Z_cartesian'].values.flatten().astype(np.float32)
+    data = da_sel.values.flatten().astype(np.float32)
+
+    indices = _make_structured_triangulation(*da_sel.shape)
+
+    return k3d.mesh(np.vstack([X, Y, Z]).T, indices, attribute=data,
+                    color_range=[vmin, vmax], **kwargs)
