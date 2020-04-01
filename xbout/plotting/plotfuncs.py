@@ -342,6 +342,57 @@ def plot3d(da, style='surface', engine='k3d', **kwargs):
 
         plot = k3d.plot()
 
+        if style == 'isosurface' or 'volume':
+            data = da.copy(deep=True).load()
+            datamin = data.min().item()
+            datamax = data.max().item()
+            data[0, :, :] = datamin - 100.
+            data[-1, :, :] = datamin - 100.
+            data[:, 0, :] = datamin - 100.
+            data[:, -1, :] = datamin - 100.
+            
+            #interpolate to Cartesian array
+            rpoints = 200
+            zpoints = 200
+            Rmin = da['R'].min()
+            Rmax = da['R'].max()
+            Zmin = da['Z'].min()
+            Zmax = da['Z'].max()
+            nx, ny, nz = data.shape
+
+            newR = (xr.DataArray(np.linspace(Rmin, Rmax, rpoints), dims='r')
+                      .expand_dims({'z': zpoints, 'zeta': nz}, axis=[0, 1]))
+            newZ = (xr.DataArray(np.linspace(Zmin, Zmax, zpoints), dims='z')
+                    .expand_dims({'r': rpoints, 'zeta': nz}, axis=[2, 1]))
+            newzeta = data['zeta'].expand_dims({'r': rpoints, 'z': zpoints}, axis=[2, 0])
+
+            R = data['R'].expand_dims({'zeta': nz}, axis=2)
+            Z = data['Z'].expand_dims({'zeta': nz}, axis=2)
+            zeta = data['zeta'].expand_dims({'x': nx, 'theta': ny}, axis=[0, 1])
+
+            from scipy.interpolate import griddata
+            grid = griddata(
+                    (R.values.flatten(), Z.values.flatten(),
+                        zeta.values.flatten()),
+                    data.values.flatten(),
+                    (newR.values, newZ.values, newzeta.values),
+                    method='nearest')
+
+            if style == 'isosurface':
+                plot += k3d.marching_cubes(grid.astype(np.float32),
+                                           bounds=[Rmin, Rmax, 0., 2.*np.pi, Zmin, Zmax],
+                                           level=1.,
+                                          )
+            elif style == 'volume':
+                plot += k3d.volume(grid.astype(np.float32),
+                                   color_range=[datamin, datamax],
+                                   bounds=[Rmin, Rmax, 0., 2.*np.pi, Zmin, Zmax],
+                                  )
+            else:
+                raise ValueError(f'{style} not supported here')
+
+            return plot
+
         for region_name, da_region in _decompose_regions(da).items():
 
             npsi, ntheta, nzeta = da_region.shape
