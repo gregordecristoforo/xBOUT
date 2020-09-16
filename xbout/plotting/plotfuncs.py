@@ -48,7 +48,7 @@ def regions(da, ax=None, **kwargs):
             infer_intervals=False,
             add_colorbar=False,
             ax=ax,
-            **kwargs
+            **kwargs,
         )
         for region in colored_regions
     ]
@@ -69,7 +69,7 @@ def plot2d_wrapper(
     vmin=None,
     vmax=None,
     aspect=None,
-    **kwargs
+    **kwargs,
 ):
     """
     Make a 2D plot using an xarray method, taking into account branch cuts (X-points).
@@ -227,7 +227,7 @@ def plot2d_wrapper(
             add_colorbar=False,
             add_labels=add_label,
             cmap=cmap,
-            **kwargs
+            **kwargs,
         )
         for region, add_label in zip(da_regions.values(), add_labels)
     ]
@@ -313,8 +313,17 @@ def plot2d_wrapper(
 
     return artists
 
-def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 100, 25),
-           color_map=None, plot=None, **kwargs):
+
+def plot3d(
+    da,
+    style="surface",
+    engine="k3d",
+    levels=None,
+    outputgrid=(100, 100, 25),
+    color_map=None,
+    plot=None,
+    **kwargs,
+):
     """
     Make a 3d plot
 
@@ -341,13 +350,13 @@ def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 10
         raise ValueError(f"plot3d needs to be passed 3d data. Got {da.dims}.")
 
     da = da.bout.add_cartesian_coordinates()
-    vmin = kwargs.pop('vmin', float(da.min().values))
-    vmax = kwargs.pop('vmax', float(da.max().values))
-    xcoord = da.metadata['bout_xdim']
-    ycoord = da.metadata['bout_ydim']
-    zcoord = da.metadata['bout_zdim']
+    vmin = kwargs.pop("vmin", float(da.min().values))
+    vmax = kwargs.pop("vmax", float(da.max().values))
+    xcoord = da.metadata["bout_xdim"]
+    ycoord = da.metadata["bout_ydim"]
+    zcoord = da.metadata["bout_zdim"]
 
-    if engine == 'k3d':
+    if engine == "k3d":
         import k3d
 
         if color_map is None:
@@ -359,100 +368,107 @@ def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 10
         else:
             return_plot = False
 
-        if style == 'isosurface' or style == 'volume':
+        if style == "isosurface" or style == "volume":
             data = da.copy(deep=True).load()
-            #data = da.bout.from_region('upper_outer_PFR').copy(deep=True).load()
+            # data = da.bout.from_region('upper_outer_PFR').copy(deep=True).load()
             datamin = data.min().item()
             datamax = data.max().item()
-            #data[0, :, :] = datamin - 2.*(datamax - datamin)
-            #data[-1, :, :] = datamin - 2.*(datamax - datamin)
-            #data[:, 0, :] = datamin - 2.*(datamax - datamin)
-            #data[:, -1, :] = datamin - 2.*(datamax - datamin)
-            
+            # data[0, :, :] = datamin - 2.*(datamax - datamin)
+            # data[-1, :, :] = datamin - 2.*(datamax - datamin)
+            # data[:, 0, :] = datamin - 2.*(datamax - datamin)
+            # data[:, -1, :] = datamin - 2.*(datamax - datamin)
+
             ##interpolate to Cartesian array
-            #rpoints = 200
-            #zpoints = 200
-            #Rmin = data['R'].min()
-            #Rmax = data['R'].max()
-            #Zmin = data['Z'].min()
-            #Zmax = data['Z'].max()
-            #nx, ny, nz = data.shape
+            # rpoints = 200
+            # zpoints = 200
+            # Rmin = data['R'].min()
+            # Rmax = data['R'].max()
+            # Zmin = data['Z'].min()
+            # Zmax = data['Z'].max()
+            # nx, ny, nz = data.shape
 
-            #newR = (xr.DataArray(np.linspace(Rmin, Rmax, rpoints), dims='r')
+            # newR = (xr.DataArray(np.linspace(Rmin, Rmax, rpoints), dims='r')
             #          .expand_dims({'z': zpoints, 'zeta': nz}, axis=[0, 1]))
-            #newZ = (xr.DataArray(np.linspace(Zmin, Zmax, zpoints), dims='z')
+            # newZ = (xr.DataArray(np.linspace(Zmin, Zmax, zpoints), dims='z')
             #        .expand_dims({'r': rpoints, 'zeta': nz}, axis=[2, 1]))
-            #newzeta = data['zeta'].expand_dims({'r': rpoints, 'z': zpoints}, axis=[2, 0])
+            # newzeta = data['zeta'].expand_dims({'r': rpoints, 'z': zpoints}, axis=[2, 0])
 
-            #R = data['R'].expand_dims({'zeta': nz}, axis=2)
-            #Z = data['Z'].expand_dims({'zeta': nz}, axis=2)
-            #zeta = data['zeta'].expand_dims({'x': nx, 'theta': ny}, axis=[0, 1])
+            # R = data['R'].expand_dims({'zeta': nz}, axis=2)
+            # Z = data['Z'].expand_dims({'zeta': nz}, axis=2)
+            # zeta = data['zeta'].expand_dims({'x': nx, 'theta': ny}, axis=[0, 1])
 
-            #from scipy.interpolate import griddata
-            #grid = griddata(
+            # from scipy.interpolate import griddata
+            # grid = griddata(
             #        (R.values.flatten(), Z.values.flatten(),
             #            zeta.values.flatten()),
             #        data.values.flatten(),
             #        (newR.values, newZ.values, newzeta.values),
             #        method='nearest')
 
-            #if style == 'isosurface':
+            # if style == 'isosurface':
             #    plot += k3d.marching_cubes(grid.astype(np.float32),
             #                               bounds=[Rmin, Rmax, 0., 2.*np.pi, Zmin, Zmax],
             #                               level=1.,
             #                              )
-            #elif style == 'volume':
+            # elif style == 'volume':
             #    plot += k3d.volume(grid.astype(np.float32),
             #                       color_range=[datamin, datamax],
             #                       bounds=[Rmin, Rmax, 0., 2.*np.pi, Zmin, Zmax],
             #                      )
-            #else:
+            # else:
             #    raise ValueError(f'{style} not supported here')
 
-            #return plot
+            # return plot
 
             xpoints, ypoints, zpoints = outputgrid
             nx, ny, nz = data.shape
 
-            #interpolate to Cartesian array
-            Xmin = data['X_cartesian'].min()
-            Xmax = data['X_cartesian'].max()
-            Ymin = data['Y_cartesian'].min()
-            Ymax = data['Y_cartesian'].max()
-            Zmin = data['Z_cartesian'].min()
-            Zmax = data['Z_cartesian'].max()
-            Rmin = data['R'].min()
-            Rmax = data['R'].max()
-            Zmin = data['Z'].min()
-            Zmax = data['Z'].max()
-            newX = (xr.DataArray(np.linspace(Xmin, Xmax, xpoints), dims='x')
-                      .expand_dims({'y': ypoints, 'z': zpoints}, axis=[1, 0]))
-            newY = (xr.DataArray(np.linspace(Ymin, Ymax, ypoints), dims='y')
-                    .expand_dims({'x': xpoints, 'z': zpoints}, axis=[2, 0]))
-            newZ = (xr.DataArray(np.linspace(Zmin, Zmax, zpoints), dims='z')
-                    .expand_dims({'x': xpoints, 'y': ypoints}, axis=[2, 1]))
-            newR = np.sqrt(newX**2 + newY**2)
-            newzeta = np.arctan2(newY, newX)#.values
+            # interpolate to Cartesian array
+            Xmin = data["X_cartesian"].min()
+            Xmax = data["X_cartesian"].max()
+            Ymin = data["Y_cartesian"].min()
+            Ymax = data["Y_cartesian"].max()
+            Zmin = data["Z_cartesian"].min()
+            Zmax = data["Z_cartesian"].max()
+            Rmin = data["R"].min()
+            Rmax = data["R"].max()
+            Zmin = data["Z"].min()
+            Zmax = data["Z"].max()
+            newX = xr.DataArray(np.linspace(Xmin, Xmax, xpoints), dims="x").expand_dims(
+                {"y": ypoints, "z": zpoints}, axis=[1, 0]
+            )
+            newY = xr.DataArray(np.linspace(Ymin, Ymax, ypoints), dims="y").expand_dims(
+                {"x": xpoints, "z": zpoints}, axis=[2, 0]
+            )
+            newZ = xr.DataArray(np.linspace(Zmin, Zmax, zpoints), dims="z").expand_dims(
+                {"x": xpoints, "y": ypoints}, axis=[2, 1]
+            )
+            newR = np.sqrt(newX ** 2 + newY ** 2)
+            newzeta = np.arctan2(newY, newX)  # .values
 
-            from scipy.interpolate import RegularGridInterpolator, griddata, LinearNDInterpolator
+            from scipy.interpolate import (
+                RegularGridInterpolator,
+                griddata,
+                LinearNDInterpolator,
+            )
 
             # need to create 3d arrays of x and y values
             # create interpolators for x and y from R and Z
-            #print('interpolate x')
-            #newx = griddata((data['R'].values.flatten(), data['Z'].values.flatten()),
+            # print('interpolate x')
+            # newx = griddata((data['R'].values.flatten(), data['Z'].values.flatten()),
             #                data['x'].expand_dims({'theta': ny}, axis=1).values.flatten(),
             #                (newR.values, newZ.values),
             #                method = 'linear',
             #               )
-            #print('interpolate y')
-            #newy = griddata((data['R'].values.flatten(), data['Z'].values.flatten()),
+            # print('interpolate y')
+            # newy = griddata((data['R'].values.flatten(), data['Z'].values.flatten()),
             #                data['theta'].expand_dims({'x': nx}, axis=0).values.flatten(),
             #                (newR.values, newZ.values),
             #                method = 'linear',
             #               )
-            #from scipy.interpolate import griddata
-            #print('start interpolating')
-            #grid = griddata(
+            # from scipy.interpolate import griddata
+            # print('start interpolating')
+            # grid = griddata(
             #        (data['X_cartesian'].values.flatten(),
             #            data['Y_cartesian'].values.flatten(),
             #            data['Z_cartesian'].values.flatten()),
@@ -461,26 +477,26 @@ def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 10
             #        method='nearest',
             #        fill_value = datamin - 2.*(datamax - datamin)
             #       )
-            #print('done interpolating')
-            #print('start interpolating')
-            #x = data['x']
-            #y = data['theta']
-            #z = data['zeta']
-            #interp = RegularGridInterpolator(
+            # print('done interpolating')
+            # print('start interpolating')
+            # x = data['x']
+            # y = data['theta']
+            # z = data['zeta']
+            # interp = RegularGridInterpolator(
             #          (x, y, z),
             #          data.values,
             #          bounds_error = False,
             #          fill_value = datamin - 2.*(datamax - datamin)
             #         )
-            #grid = interp((newx, newy, newzeta),
+            # grid = interp((newx, newy, newzeta),
             #              method='linear',
             #             )
-            #print('done interpolating')
-            print('start interpolating')
-            #R3d = data['R'].expand_dims({'zeta': nz}, axis=2)
-            #Z3d = data['Z'].expand_dims({'zeta': nz}, axis=2)
-            #zeta3d = data['zeta'].expand_dims({'x': nx, 'theta': ny}, axis=(0, 1))
-            #grid = griddata(
+            # print('done interpolating')
+            print("start interpolating")
+            # R3d = data['R'].expand_dims({'zeta': nz}, axis=2)
+            # Z3d = data['Z'].expand_dims({'zeta': nz}, axis=2)
+            # zeta3d = data['zeta'].expand_dims({'x': nx, 'theta': ny}, axis=(0, 1))
+            # grid = griddata(
             #        (R3d.values.flatten(),
             #            Z3d.values.flatten(),
             #            zeta3d.values.flatten()),
@@ -489,21 +505,23 @@ def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 10
             #        method='linear',
             #        fill_value = datamin - 2.*(datamax - datamin)
             #       )
-            #interp = LinearNDInterpolator((R3d.values.flatten(), Z3d.values.flatten,
+            # interp = LinearNDInterpolator((R3d.values.flatten(), Z3d.values.flatten,
             #                                  zeta3d.values.flatten()),
             #                              data.values.flatten(),
             #                              fill_value = datamin - 2.*(datamax - datamin)
             #                             )
-            #print('made interpolator')
-            #grid = interp((newR.values, newZ.values, newzeta.values), method='linear')
-            #Rcyl = (xr.DataArray(np.linspace(Rmin, Rmax, zpoints), dims='r')
+            # print('made interpolator')
+            # grid = interp((newR.values, newZ.values, newzeta.values), method='linear')
+            # Rcyl = (xr.DataArray(np.linspace(Rmin, Rmax, zpoints), dims='r')
             #          .expand_dims({'z': zpoints, 'zeta': nz}, axis=[1, 2]))
-            #Zcyl = (xr.DataArray(np.linspace(Zmin, Zmax, zpoints), dims='z')
+            # Zcyl = (xr.DataArray(np.linspace(Zmin, Zmax, zpoints), dims='z')
             #          .expand_dims({'r': zpoints, 'zeta': nz}, axis=[0, 2]))
-            Rcyl = (xr.DataArray(np.linspace(Rmin, Rmax, 2*zpoints), dims='r')
-                      .expand_dims({'z': 2*zpoints}, axis=1))
-            Zcyl = (xr.DataArray(np.linspace(Zmin, Zmax, 2*zpoints), dims='z')
-                      .expand_dims({'r': 2*zpoints}, axis=0))
+            Rcyl = xr.DataArray(
+                np.linspace(Rmin, Rmax, 2 * zpoints), dims="r"
+            ).expand_dims({"z": 2 * zpoints}, axis=1)
+            Zcyl = xr.DataArray(
+                np.linspace(Zmin, Zmax, 2 * zpoints), dims="z"
+            ).expand_dims({"r": 2 * zpoints}, axis=0)
 
             # Interpolate in two stages for efficiency. Unstructured 3d interpolation is
             # very slow. Unstructured 2d interpolation onto Cartesian (R, Z) grids,
@@ -516,44 +534,46 @@ def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 10
             # order of dimensions does not really matter here - output only depends on
             # shape of newR, newZ, newzeta. Possibly more efficient to assign the 2d
             # results in the loop to the last two dimensions, so put zeta first.
-            data_cyl = np.zeros((nz, 2*zpoints, 2*zpoints))
-            print('interpolate poloidal planes')
+            data_cyl = np.zeros((nz, 2 * zpoints, 2 * zpoints))
+            print("interpolate poloidal planes")
             for z in range(nz):
-                data_cyl[z] = griddata((data['R'].values.flatten(),
-                                        data['Z'].values.flatten()),
-                                       data.isel(zeta=z).values.flatten(),
-                                       (Rcyl.values, Zcyl.values),
-                                       method='cubic',
-                                       fill_value = datamin - 2.*(datamax - datamin),
-                                      )
-            print('build 3d interpolator')
-            interp = RegularGridInterpolator((data['zeta'].values,
-                                              Rcyl.isel(z=0).values,
-                                              Zcyl.isel(r=0).values),
-                                             data_cyl,
-                                             bounds_error = False,
-                                             fill_value = datamin - 2.*(datamax - datamin)
-                                            )
-            print('do 3d interpolation')
-            grid = interp((newzeta, newR, newZ),
-                          method='linear',
-                         )
-            print('done interpolating')
-            if style == 'isosurface':
+                data_cyl[z] = griddata(
+                    (data["R"].values.flatten(), data["Z"].values.flatten()),
+                    data.isel(zeta=z).values.flatten(),
+                    (Rcyl.values, Zcyl.values),
+                    method="cubic",
+                    fill_value=datamin - 2.0 * (datamax - datamin),
+                )
+            print("build 3d interpolator")
+            interp = RegularGridInterpolator(
+                (data["zeta"].values, Rcyl.isel(z=0).values, Zcyl.isel(r=0).values),
+                data_cyl,
+                bounds_error=False,
+                fill_value=datamin - 2.0 * (datamax - datamin),
+            )
+            print("do 3d interpolation")
+            grid = interp(
+                (newzeta, newR, newZ),
+                method="linear",
+            )
+            print("done interpolating")
+            if style == "isosurface":
                 if levels is None:
-                    levels = [(0.5*(datamin + datamax), 1.)]
+                    levels = [(0.5 * (datamin + datamax), 1.0)]
                 for level, opacity in levels:
-                    plot += k3d.marching_cubes(grid.astype(np.float32),
-                                               bounds=[Xmin, Xmax, Ymin, Ymax, Zmin, Zmax],
-                                               level=level,
-                                               color_map=color_map,
-                                              )
-            elif style == 'volume':
-                plot += k3d.volume(grid.astype(np.float32),
-                                   color_range=[datamin, datamax],
-                                   bounds=[Xmin, Xmax, Ymin, Ymax, Zmin, Zmax],
-                                   color_map=color_map,
-                                  )
+                    plot += k3d.marching_cubes(
+                        grid.astype(np.float32),
+                        bounds=[Xmin, Xmax, Ymin, Ymax, Zmin, Zmax],
+                        level=level,
+                        color_map=color_map,
+                    )
+            elif style == "volume":
+                plot += k3d.volume(
+                    grid.astype(np.float32),
+                    color_range=[datamin, datamax],
+                    bounds=[Xmin, Xmax, Ymin, Ymax, Zmin, Zmax],
+                    color_map=color_map,
+                )
             if return_plot:
                 return plot
             else:
@@ -563,40 +583,72 @@ def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 10
 
             npsi, ntheta, nzeta = da_region.shape
 
-            if style == 'surface':
+            if style == "surface":
                 region = da_region.regions[region_name]
 
                 if region.connection_inner_x is None:
                     # Plot the inner-x surface
-                    plot += _k3d_plot_isel(da_region, {xcoord: 0}, vmin, vmax,
-                                           color_map=color_map, **kwargs)
+                    plot += _k3d_plot_isel(
+                        da_region,
+                        {xcoord: 0},
+                        vmin,
+                        vmax,
+                        color_map=color_map,
+                        **kwargs,
+                    )
 
                 if region.connection_outer_x is None:
                     # Plot the outer-x surface
-                    plot += _k3d_plot_isel(da_region, {xcoord: -1}, vmin, vmax,
-                                           color_map=color_map, **kwargs)
+                    plot += _k3d_plot_isel(
+                        da_region,
+                        {xcoord: -1},
+                        vmin,
+                        vmax,
+                        color_map=color_map,
+                        **kwargs,
+                    )
 
                 if region.connection_lower_y is None:
                     # Plot the lower-y surface
-                    plot += _k3d_plot_isel(da_region, {ycoord: 0}, vmin, vmax,
-                                           color_map=color_map, **kwargs)
+                    plot += _k3d_plot_isel(
+                        da_region,
+                        {ycoord: 0},
+                        vmin,
+                        vmax,
+                        color_map=color_map,
+                        **kwargs,
+                    )
 
                 if region.connection_upper_y is None:
                     # Plot the upper-y surface
-                    plot += _k3d_plot_isel(da_region, {ycoord: -1}, vmin, vmax,
-                                           color_map=color_map, **kwargs)
+                    plot += _k3d_plot_isel(
+                        da_region,
+                        {ycoord: -1},
+                        vmin,
+                        vmax,
+                        color_map=color_map,
+                        **kwargs,
+                    )
 
                 # First z-surface
-                plot += _k3d_plot_isel(da_region, {zcoord: 0}, vmin, vmax,
-                                       color_map=color_map, **kwargs)
+                plot += _k3d_plot_isel(
+                    da_region, {zcoord: 0}, vmin, vmax, color_map=color_map, **kwargs
+                )
 
                 # Last z-surface
-                plot += _k3d_plot_isel(da_region, {zcoord: -1}, vmin, vmax,
-                                       color_map=color_map, **kwargs)
-            elif style == 'poloidal planes':
+                plot += _k3d_plot_isel(
+                    da_region, {zcoord: -1}, vmin, vmax, color_map=color_map, **kwargs
+                )
+            elif style == "poloidal planes":
                 for zeta in range(nzeta):
-                    plot += _k3d_plot_isel(da_region, {zcoord: zeta}, vmin, vmax,
-                                           color_map=color_map, **kwargs)
+                    plot += _k3d_plot_isel(
+                        da_region,
+                        {zcoord: zeta},
+                        vmin,
+                        vmax,
+                        color_map=color_map,
+                        **kwargs,
+                    )
             else:
                 raise ValueError(f"style='{style}' not implemented for engine='k3d'")
 
@@ -605,35 +657,36 @@ def plot3d(da, style='surface', engine='k3d', levels = None, outputgrid=(100, 10
         else:
             return
 
-    elif engine == 'mayavi':
+    elif engine == "mayavi":
         from mayavi import mlab
 
-        if style == 'surface':
+        if style == "surface":
             for region_name, da_region in _decompose_regions(da).items():
                 region = da_region.regions[region_name]
 
                 # Always include z-surfaces
-                surface_selections = [{da.metadata['bout_zdim']: 0},
-                                      {da.metadata['bout_zdim']: -1}
-                                      ]
+                surface_selections = [
+                    {da.metadata["bout_zdim"]: 0},
+                    {da.metadata["bout_zdim"]: -1},
+                ]
                 if region.connection_inner_x is None:
                     # Plot the inner-x surface
-                    surface_selections.append({da.metadata['bout_xdim']: 0})
+                    surface_selections.append({da.metadata["bout_xdim"]: 0})
                 if region.connection_outer_x is None:
                     # Plot the outer-x surface
-                    surface_selections.append({da.metadata['bout_xdim']: -1})
+                    surface_selections.append({da.metadata["bout_xdim"]: -1})
                 if region.connection_lower_y is None:
                     # Plot the lower-y surface
-                    surface_selections.append({da.metadata['bout_ydim']: 0})
+                    surface_selections.append({da.metadata["bout_ydim"]: 0})
                 if region.connection_upper_y is None:
                     # Plot the upper-y surface
-                    surface_selections.append({da.metadata['bout_ydim']: -1})
+                    surface_selections.append({da.metadata["bout_ydim"]: -1})
 
                 for surface_sel in surface_selections:
                     da_sel = da_region.isel(surface_sel)
-                    X = da_sel['X_cartesian'].values
-                    Y = da_sel['Y_cartesian'].values
-                    Z = da_sel['Z_cartesian'].values
+                    X = da_sel["X_cartesian"].values
+                    Y = da_sel["Y_cartesian"].values
+                    Z = da_sel["Z_cartesian"].values
                     data = da_sel.values
 
                     mlab.mesh(X, Y, Z, scalars=data, vmin=vmin, vmax=vmax, **kwargs)

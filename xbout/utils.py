@@ -105,17 +105,17 @@ def _add_cartesian_coordinates(ds):
     # Add Cartesian X and Y coordinates if they do not exist already
     # Works on either BoutDataset or BoutDataArray
 
-    R = ds['R']
-    Z = ds['Z']
-    zeta = ds[ds.metadata['bout_zdim']]
-    if 'X_cartesian' not in ds.coords:
-        X = R*np.cos(zeta)
+    R = ds["R"]
+    Z = ds["Z"]
+    zeta = ds[ds.metadata["bout_zdim"]]
+    if "X_cartesian" not in ds.coords:
+        X = R * np.cos(zeta)
         ds = ds.assign_coords(X_cartesian=X)
-    if 'Y_cartesian' not in ds.coords:
-        Y = R*np.sin(zeta)
+    if "Y_cartesian" not in ds.coords:
+        Y = R * np.sin(zeta)
         ds = ds.assign_coords(Y_cartesian=Y)
-    if 'Z_cartesian' not in ds.coords:
-        zcoord = ds.metadata['bout_zdim']
+    if "Z_cartesian" not in ds.coords:
+        zcoord = ds.metadata["bout_zdim"]
         nz = len(ds[zcoord])
         ds = ds.assign_coords(Z_cartesian=Z.expand_dims({zcoord: nz}, axis=-1))
 

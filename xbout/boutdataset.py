@@ -22,7 +22,9 @@ from .plotting.animate import animate_poloidal, animate_pcolormesh, animate_line
 from .plotting.utils import _create_norm
 from .region import _from_region
 from .utils import (
-    _add_cartesian_coordinates, _get_bounding_surfaces, _split_into_restarts
+    _add_cartesian_coordinates,
+    _get_bounding_surfaces,
+    _split_into_restarts,
 )
 
 

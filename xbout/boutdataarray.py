@@ -17,7 +17,7 @@ from .region import _from_region
 from .utils import (
     _add_cartesian_coordinates,
     _update_metadata_increased_resolution,
-    _get_bounding_surfaces
+    _get_bounding_surfaces,
 )
 
 
