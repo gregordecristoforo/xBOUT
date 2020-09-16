@@ -20,8 +20,10 @@ from dask.diagnostics import ProgressBar
 from .geometries import apply_geometry
 from .plotting.animate import animate_poloidal, animate_pcolormesh, animate_line
 from .plotting.utils import _create_norm
-from .region import _add_cartesian_coordinates, _from_region
-from .utils import _get_bounding_surfaces, _split_into_restarts
+from .region import _from_region
+from .utils import (
+    _add_cartesian_coordinates, _get_bounding_surfaces, _split_into_restarts
+)
 
 
 @xr.register_dataset_accessor("bout")
